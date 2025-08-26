@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GigPi - Pi Hackathon 2025</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    body { font-family: Arial, sans-serif; margin: 0; padding: 20px; background: #f4f4f9; text-align: center; }
+    h1, h3 { color: #6b48ff; }
+    .container { max-width: 400px; margin: 0 auto; }
+    .map { height: 250px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    .form, .shop, .gig-list { background: white; padding: 15px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+    input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+    button { background: #6b48ff; color: white; padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; transition: background 0.3s; }
+    button:hover { background: #5a3edb; }
+    .gig-item { border-bottom: 1px solid #ccc; padding: 10px 0; }
+    .gig-item:last-child { border-bottom: none; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>GigPi</h1>
+
+    <!-- Map Screen -->
+    <h3>Find Shops & Gigs</h3>
+    <div id="map" class="map"></div>
+    <select id="filter" onchange="filterMap()">
+      <option value="all">All</option>
+      <option value="supermarket">Supermarkets</option>
+      <option value="repair">Repair Shops</option>
+      <option value="auto">Auto Shops</option>
+    </select>
+
+    <!-- Gig Posting Form -->
+    <div class="form">
+      <h3>Post a Gig</h3>
+      <input id="gigTitle" placeholder="Gig Title (e.g., Deliver Groceries)">
+      <input id="gigPrice" type="number" placeholder="Price in Pi (e.g., 5)">
+      <input id="gigLocation" placeholder="Location (e.g., 123 Main St)">
+      <button onclick="postGig()">Post Gig</button>
+    </div>
+
+    <!-- Posted Gigs -->
+    <div class="gig-list" id="gigList">
+      <h3>Posted Gigs</h3>
+      <!-- Dynamic gigs will appear here -->
+    </div>
+
+    <!-- Shop Registration Form -->
+    <div class="form">
+      <h3>Register Shop</h3>
+      <input id="shopName" placeholder="Shop Name (e.g., Bob’s Supermarket)">
+      <select id="shopCategory">
+        <option value="supermarket">Supermarket</option>
+        <option value="repair">Repair Shop</option>
+        <option value="auto">Auto Shop</option>
+      </select>
+      <input id="shopServices" placeholder="Services (e.g., Grocery Delivery, 3 Pi)">
+      <input id="shopLocation" placeholder="Location (e.g., 123 Main St)">
+      <button onclick="registerShop()">Register Shop</button>
+    </div>
+
+    <!-- Shop Profile -->
+    <div class="shop" id="shopProfile">
+      <h3>Sample Shop</h3>
+      <p id="shopDetails">No shop registered yet.</p>
+      <button onclick="hireShop()">Hire (Mock Payment)</button>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    // Initialize Leaflet map
+    var map = L.map('map').setView([51.505, -0.09], 13); // Default: London
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+    var markers = [
+      L.marker([51.5, -0.09]).bindPopup('Bob’s Auto Shop, 15 Pi, auto'),
+      L.marker([51.51, -0.08]).bindPopup('Alice’s Supermarket, 3 Pi, supermarket')
+    ];
+    markers.forEach(marker => marker.addTo(map));
+
+    // Filter map pins
+    function filterMap() {
+      var filter = document.getElementById('filter').value;
+      markers.forEach(marker => {
+        var popup = marker.getPopup().getContent();
+        if (filter === 'all' || popup.includes(filter)) {
+          marker.addTo(map);
+        } else {
+          map.removeLayer(marker);
+        }
+      });
+    }
+
+    // Store gigs (mock database)
+    var gigs = [];
+    function postGig() {
+      var title = document.getElementById('gigTitle').value;
+      var price = document.getElementById('gigPrice').value;
+      var location = document.getElementById('gigLocation').value;
+      if (!title || !price || !location) {
+        alert('Please fill all gig fields!');
+        return;
+      }
+      gigs.push({ title, price, location });
+      updateGigList();
+      // Add to map
+      L.marker([51.5 + Math.random() * 0.01, -0.09 + Math.random() * 0.01])
+        .addTo(map)
+        .bindPopup(`${title}, ${price} Pi, gig`);
+      document.getElementById('gigTitle').value = '';
+      document.getElementById('gigPrice').value = '';
+      document.getElementById('gigLocation').value = '';
+    }
+
+    // Update gig list
+    function updateGigList() {
+      var list = document.getElementById('gigList');
+      list.innerHTML = '<h3>Posted Gigs</h3>';
+      gigs.forEach((gig, index) => {
+        var div = document.createElement('div');
+        div.className = 'gig-item';
+        div.innerHTML = `${gig.title} - ${gig.price} Pi at ${gig.location} <button onclick="payGig(${index})">Pay ${gig.price} Pi</button>`;
+        list.appendChild(div);
+      });
+    }
+
+    // Shop registration
+    function registerShop() {
+      var name = document.getElementById('shopName').value;
+      var category = document.getElementById('shopCategory').value;
+      var services = document.getElementById('shopServices').value;
+      var location = document.getElementById('shopLocation').value;
+      if (!name || !category || !services || !location) {
+        alert('Please fill all shop fields!');
+        return;
+      }
+      document.getElementById('shopDetails').innerHTML = `
+        Name: ${name}<br>
+        Category: ${category}<br>
+        Services: ${services}<br>
+        Location: ${location}
+      `;
+      L.marker([51.5 + Math.random() * 0.01, -0.09 + Math.random() * 0.01])
+        .addTo(map)
+        .bindPopup(`${name}, ${services}, ${category}`);
+      document.getElementById('shopName').value = '';
+      document.getElementById('shopCategory').value = 'supermarket';
+      document.getElementById('shopServices').value = '';
+      document.getElementById('shopLocation').value = '';
+    }
+
+    // Mock payment with escrow
+    function payGig(index) {
+      var gig = gigs[index];
+      alert(`Escrow started: ${gig.price} Pi for ${gig.title}. Awaiting AI verification...`);
+      // Simulate AI verification (later: connect to Google Colab)
+      setTimeout(() => {
+        alert(`AI verified! ${gig.price} Pi paid for ${gig.title}.`);
+      }, 2000);
+    }
+
+    function hireShop() {
+      alert('Escrow started: 3 Pi for shop hire. Awaiting AI verification...');
+      setTimeout(() => {
+        alert('AI verified! 3 Pi paid to shop.');
+      }, 2000);
+    }
+  </script>
+</body>
+</html>
