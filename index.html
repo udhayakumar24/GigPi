@@ -22,6 +22,8 @@
   <div class="container">
     <h1>GigPi</h1>
 
+    <button onclick="locateUser()">Locate Me</button>
+
     <!-- Map Screen -->
     <h3>Find Shops & Gigs</h3>
     <div id="map" class="map"></div>
@@ -157,7 +159,6 @@
     function payGig(index) {
       var gig = gigs[index];
       alert(`Escrow started: ${gig.price} Pi for ${gig.title}. Awaiting AI verification...`);
-      // Simulate AI verification (later: connect to Google Colab)
       setTimeout(() => {
         alert(`AI verified! ${gig.price} Pi paid for ${gig.title}.`);
       }, 2000);
@@ -168,6 +169,18 @@
       setTimeout(() => {
         alert('AI verified! 3 Pi paid to shop.');
       }, 2000);
+    }
+
+    // Locate user
+    function locateUser() {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(pos => {
+          map.setView([pos.coords.latitude, pos.coords.longitude], 13);
+          L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map).bindPopup('Your Location');
+        }, () => alert('Location access denied.'));
+      } else {
+        alert('Geolocation not supported.');
+      }
     }
   </script>
 </body>
