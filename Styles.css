@@ -3,8 +3,6 @@ body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #f
 .container { max-width: 600px; margin: 0 auto; padding: 15px; }
 header { background: #2c3e50; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
 header h1 { font-size: 1.8em; font-weight: 700; }
-.map-section { position: relative; margin: 15px 0; }
-.map { height: 250px; width: 100%; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
 .locate-btn { position: absolute; top: 10px; right: 10px; background: #e74c3c; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
 .locate-btn:hover { background: #c0392b; }
 .search-bar { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 1em; }
