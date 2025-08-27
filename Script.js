@@ -13,6 +13,8 @@ markers.forEach(marker => marker.addTo(map));
 // Load Data from Local Storage
 let gigs = JSON.parse(localStorage.getItem('gigs')) || [];
 let shops = JSON.parse(localStorage.getItem('shops')) || [];
+updateGigList();
+updateShopProfile();
 console.log('Initial gigs:', gigs, 'Initial shops:', shops);
 
 // Navigation Functions
