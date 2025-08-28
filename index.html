@@ -1,228 +1,192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GigPi - Gig & Delivery Marketplace</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css" />
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Roboto', sans-serif; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); color: #2c3e50; min-height: 100vh; }
-    .container { max-width: 600px; margin: 0 auto; padding: 15px; }
-    header { background: #2c3e50; color: white; padding: 10px; border-radius: 8px; margin-bottom: 15px; text-align: center; }
-    header h1 { font-size: 1.8em; }
-    .map-section { position: relative; margin: 15px 0; }
-    .map { height: 250px; width: 100%; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .locate-btn { position: absolute; top: 10px; right: 10px; background: #e74c3c; border: none; color: white; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
-    .locate-btn:hover { background: #c0392b; }
-    .search-bar { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 1em; }
-    .form-step, .shop-step, .gig-list, .shop-profile { background: white; padding: 15px; margin: 15px 0; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    input, select, button { width: 100%; padding: 10px; margin: 8px 0; border: 1px solid #ddd; border-radius: 4px; font-size: 1em; }
-    button { background: #3498db; color: white; border: none; cursor: pointer; transition: background 0.3s; }
-    button:hover { background: #2980b9; }
-    .nav-btn { background: #2ecc71; margin: 5px 0; }
-    .nav-btn:hover { background: #27ae60; }
-    .gig-item { padding: 10px; border-bottom: 1px solid #eee; }
-    .gig-item:last-child { border-bottom: none; }
-    .rating { color: #f1c40f; margin: 5px 0; }
-    .verified { color: #2ecc71; font-size: 0.9em; }
-    @media (max-width: 600px) { .map { height: 200px; } .container { padding: 10px; } }
-  </style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>GigPi — Pi-powered gig & shop marketplace</title>
+
+  <!-- Google Font + Font Awesome -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+
+  <!-- Leaflet -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+  <!-- App styles -->
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>GigPi</h1>
+  <div class="app-shell">
+    <header class="app-header">
+      <div class="brand">
+        <img src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40'><rect rx='8' width='100%' height='100%' fill='%23131921'/><text x='50%' y='55%' font-family='Roboto' font-size='18' fill='%23ffd814' text-anchor='middle'>π</text></svg>" alt="logo" class="logo">
+        <h1>GigPi</h1>
+      </div>
+      <div class="header-actions">
+        <button class="btn" id="btnPostGig"><i class="fa-solid fa-briefcase"></i> Post Gig</button>
+        <button class="btn" id="btnRegisterShop"><i class="fa-solid fa-shop"></i> Register Shop</button>
+        <button class="btn" id="btnDelivery"><i class="fa-solid fa-clock"></i> Delivery</button>
+      </div>
     </header>
 
-    <div class="map-section">
-      <div id="map" class="map"></div>
-      <button class="locate-btn" onclick="locateUser()"><i class="fas fa-location-arrow"></i> Locate Me</button>
-    </div>
+    <main class="container">
+      <!-- Map -->
+      <section id="map-section" class="card">
+        <div class="map-header">
+          <strong>Nearby Gigs & Shops</strong>
+          <div>
+            <button class="icon-btn" id="btnLocate" title="Locate me"><i class="fa-solid fa-location-crosshairs"></i></button>
+            <button class="icon-btn" id="btnLoadDemo" title="Load demo data"><i class="fa-solid fa-database"></i></button>
+          </div>
+        </div>
+        <div id="map"></div>
+      </section>
 
-    <input type="text" id="searchBar" class="search-bar" placeholder="Search gigs or shops..." onkeyup="filterContent()">
+      <!-- Notification -->
+      <div id="notification" class="notification" aria-live="polite"></div>
 
-    <div class="form-step" id="gigStep1">
-      <h3>Post a Gig</h3>
-      <input id="gigTitle" placeholder="Gig Title (e.g., Deliver Groceries)">
-      <button onclick="nextStep('gig')">Next</button>
-    </div>
-    <div class="form-step" id="gigStep2" style="display: none;">
-      <h3>Gig Details</h3>
-      <input id="gigPrice" type="number" placeholder="Price in Pi (e.g., 5)">
-      <input id="gigLocation" placeholder="Location (e.g., 123 Main St)">
-      <button onclick="postGig()">Submit</button>
-      <button class="nav-btn" onclick="prevStep('gig')">Back</button>
-    </div>
+      <!-- Search -->
+      <section class="card">
+        <input id="search" type="search" placeholder="Search gigs or shops (title, name, service)..." aria-label="Search gigs and shops" />
+      </section>
 
-    <div class="form-step" id="shopStep1">
-      <h3>Register Shop</h3>
-      <input id="shopName" placeholder="Shop Name (e.g., Bob’s Supermarket)">
-      <button onclick="nextStep('shop')">Next</button>
-    </div>
-    <div class="form-step" id="shopStep2" style="display: none;">
-      <h3>Shop Details</h3>
-      <select id="shopCategory">
-        <option value="supermarket">Supermarket</option>
-        <option value="repair">Repair Shop</option>
-        <option value="auto">Auto Shop</option>
-      </select>
-      <input id="shopServices" placeholder="Services (e.g., Grocery Delivery, 3 Pi)">
-      <input id="shopLocation" placeholder="Location (e.g., 123 Main St)">
-      <button onclick="registerShop()">Submit</button>
-      <button class="nav-btn" onclick="prevStep('shop')">Back</button>
-    </div>
+      <!-- Forms / Actions -->
+      <section id="main-actions" class="cards-grid">
+        <div id="gig-list" class="card"></div>
+        <aside id="shop-profile" class="card"></aside>
+      </section>
 
-    <div class="form-step">
-      <h3>Pick a Delivery Block</h3>
-      <select id="deliveryBlock">
-        <option value="3h">3 Hours - 10 Pi</option>
-        <option value="6h">6 Hours - 20 Pi</option>
-      </select>
-      <button onclick="selectBlock()">Start Block</button>
-    </div>
+      <section id="deliveries" class="card"></section>
+    </main>
 
-    <div class="gig-list" id="gigList">
-      <h3>Available Gigs</h3>
-      <!-- Dynamic gigs here -->
-    </div>
+    <footer class="app-footer">
+      <small>GigPi — built for Pi Network · Demo (frontend-only) · Deploy on GitHub Pages</small>
+    </footer>
+  </div>
 
-    <div class="shop-profile" id="shopProfile">
-      <h3>Featured Shop</h3>
-      <p id="shopDetails">No shop registered yet.</p>
-      <span class="verified"><i class="fas fa-check-circle"></i> Verified</span>
-      <button onclick="hireShop()">Hire (Mock Payment)</button>
-    </div>
+  <!-- Modals (hidden by default) -->
+  <!-- Gig Modal (2-step) -->
+  <div id="modalGig" class="modal" aria-hidden="true">
+    <div class="modal-inner card">
+      <h2>Post Gig <small id="gigStepLabel">Step 1/2</small></h2>
+      <div id="gigStep1" class="form-step">
+        <label>Title
+          <input id="gigTitle" type="text" placeholder="e.g., Deliver groceries" />
+        </label>
+        <div class="row">
+          <button class="btn btn-secondary" id="cancelGig1">Cancel</button>
+          <button class="btn" id="nextGig">Next</button>
+        </div>
+      </div>
 
-    <div class="gig-item" id="ratingSection" style="display: none;">
-      <h3>Rate Your Experience</h3>
-      <span class="rating" id="starRating"></span>
-      <select id="rating" onchange="updateStars()">
-        <option value="1">1</option>
-        <option value="2">2</option>
-        <option value="3">3</option>
-        <option value="4">4</option>
-        <option value="5">5</option>
-      </select>
-      <button onclick="submitRating()">Submit</button>
+      <div id="gigStep2" class="form-step" style="display:none;">
+        <label>Price (Pi)
+          <input id="gigPrice" type="number" step="0.1" min="0" placeholder="e.g., 5" />
+        </label>
+        <label>Location (optional text)
+          <input id="gigLocationText" type="text" placeholder="e.g., Downtown, near market" />
+        </label>
+        <div class="row small">
+          <button class="btn btn-tertiary" id="useMyLocGig"><i class="fa-solid fa-location-dot"></i> Use my location</button>
+          <button class="btn btn-tertiary" id="pickOnMapGig"><i class="fa-solid fa-map-location"></i> Pick on map</button>
+        </div>
+        <div class="row">
+          <button class="btn btn-secondary" id="prevGig">Back</button>
+          <button class="btn" id="submitGig">Post Gig</button>
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-  <script>
-    // Map Initialization
-    var map = L.map('map').setView([51.505, -0.09], 13);
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
-    var markers = [
-      L.marker([51.5, -0.09]).bindPopup('Bob’s Auto Shop, 15 Pi, auto <span class="verified"><i class="fas fa-check-circle"></i> Verified</span>'),
-      L.marker([51.51, -0.08]).bindPopup('Alice’s Supermarket, 3 Pi, supermarket <span class="verified"><i class="fas fa-check-circle"></i> Verified</span>')
-    ];
-    markers.forEach(marker => marker.addTo(map));
+  <!-- Shop Modal (2-step) -->
+  <div id="modalShop" class="modal" aria-hidden="true">
+    <div class="modal-inner card">
+      <h2>Register Shop <small id="shopStepLabel">Step 1/2</small></h2>
+      <div id="shopStep1" class="form-step">
+        <label>Shop Name
+          <input id="shopName" type="text" placeholder="e.g., Bob's Auto" />
+        </label>
+        <div class="row">
+          <button class="btn btn-secondary" id="cancelShop1">Cancel</button>
+          <button class="btn" id="nextShop">Next</button>
+        </div>
+      </div>
 
-    // Navigation Functions
-    function nextStep(type) {
-      document.getElementById(`${type}Step1`).style.display = 'none';
-      document.getElementById(`${type}Step2`).style.display = 'block';
-    }
-    function prevStep(type) {
-      document.getElementById(`${type}Step1`).style.display = 'block';
-      document.getElementById(`${type}Step2`).style.display = 'none';
-    }
+      <div id="shopStep2" class="form-step" style="display:none;">
+        <label>Category
+          <select id="shopCategory">
+            <option value="supermarket">Supermarket</option>
+            <option value="repair">Repair</option>
+            <option value="auto">Auto</option>
+            <option value="food">Food</option>
+            <option value="other">Other</option>
+          </select>
+        </label>
+        <label>Services (comma separated)
+          <input id="shopServices" type="text" placeholder="e.g., Oil change, Repair" />
+        </label>
+        <label>Location (optional)
+          <input id="shopLocationText" type="text" placeholder="e.g., 1st Main Road" />
+        </label>
+        <div class="row small">
+          <button class="btn btn-tertiary" id="useMyLocShop"><i class="fa-solid fa-location-dot"></i> Use my location</button>
+          <button class="btn btn-tertiary" id="pickOnMapShop"><i class="fa-solid fa-map-location"></i> Pick on map</button>
+        </div>
+        <div class="row">
+          <button class="btn btn-secondary" id="prevShop">Back</button>
+          <button class="btn" id="submitShop">Register Shop</button>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    // Gig Posting
-    var gigs = [];
-    function postGig() {
-      var title = document.getElementById('gigTitle').value;
-      var price = document.getElementById('gigPrice').value;
-      var location = document.getElementById('gigLocation').value;
-      if (!title || !price || !location) { alert('Please fill all fields!'); return; }
-      gigs.push({ title, price, location });
-      updateGigList();
-      L.marker([51.5 + Math.random() * 0.01, -0.09 + Math.random() * 0.01])
-        .addTo(map).bindPopup(`${title}, ${price} Pi, gig`);
-      document.getElementById('gigStep2').style.display = 'none';
-      document.getElementById('gigStep1').style.display = 'block';
-      document.getElementById('gigTitle').value = '';
-      document.getElementById('gigPrice').value = '';
-      document.getElementById('gigLocation').value = '';
-    }
+  <!-- Delivery Modal (single step) -->
+  <div id="modalDelivery" class="modal" aria-hidden="true">
+    <div class="modal-inner card">
+      <h2>Book Delivery Block</h2>
+      <label>Choose Block
+        <select id="deliveryBlock">
+          <option value="3h">3 hours — 10 Pi</option>
+          <option value="6h">6 hours — 20 Pi</option>
+        </select>
+      </label>
+      <div class="row">
+        <button class="btn btn-secondary" id="cancelDelivery">Cancel</button>
+        <button class="btn" id="startDelivery">Start Block</button>
+      </div>
+    </div>
+  </div>
 
-    // Shop Registration
-    function registerShop() {
-      var name = document.getElementById('shopName').value;
-      var category = document.getElementById('shopCategory').value;
-      var services = document.getElementById('shopServices').value;
-      var location = document.getElementById('shopLocation').value;
-      if (!name || !category || !services || !location) { alert('Please fill all fields!'); return; }
-      document.getElementById('shopDetails').innerHTML = `Name: ${name}<br>Category: ${category}<br>Services: ${services}<br>Location: ${location}<br><span class="verified"><i class="fas fa-check-circle"></i> Verified</span>`;
-      L.marker([51.5 + Math.random() * 0.01, -0.09 + Math.random() * 0.01])
-        .addTo(map).bindPopup(`${name}, ${services}, ${category} <span class="verified"><i class="fas fa-check-circle"></i> Verified</span>`);
-      document.getElementById('shopStep2').style.display = 'none';
-      document.getElementById('shopStep1').style.display = 'block';
-      document.getElementById('shopName').value = '';
-      document.getElementById('shopCategory').value = 'supermarket';
-      document.getElementById('shopServices').value = '';
-      document.getElementById('shopLocation').value = '';
-    }
+  <!-- Rating Modal -->
+  <div id="modalRating" class="modal" aria-hidden="true">
+    <div class="modal-inner card">
+      <h2>Rate Experience</h2>
+      <label>Rating
+        <select id="ratingSelect">
+          <option value="1">1 - Bad</option>
+          <option value="2">2 - Poor</option>
+          <option value="3">3 - Okay</option>
+          <option value="4">4 - Good</option>
+          <option value="5">5 - Excellent</option>
+        </select>
+      </label>
+      <div class="row">
+        <button class="btn btn-secondary" id="cancelRating">Skip</button>
+        <button class="btn" id="submitRating">Submit Rating</button>
+      </div>
+    </div>
+  </div>
 
-    // Delivery Blocks
-    function selectBlock() {
-      var block = document.getElementById('deliveryBlock').value;
-      alert(`Delivery block selected: ${block}. Start delivering!`);
-    }
+  <!-- Spinner overlay for mock payments -->
+  <div id="overlay" class="overlay" aria-hidden="true">
+    <div class="spinner-card card">
+      <div class="spinner"></div>
+      <p id="overlayText">Processing pi payment...</p>
+    </div>
+  </div>
 
-    // Gig List Update
-    function updateGigList() {
-      var list = document.getElementById('gigList');
-      list.innerHTML = '<h3>Available Gigs</h3>';
-      gigs.forEach((gig, index) => {
-        var div = document.createElement('div');
-        div.className = 'gig-item';
-        div.innerHTML = `${gig.title} - ${gig.price} Pi at ${gig.location} <button onclick="payGig(${index})">Pay</button>`;
-        list.appendChild(div);
-      });
-    }
-
-    // Payment and Rating
-    function payGig(index) {
-      var gig = gigs[index];
-      alert(`Escrow started: ${gig.price} Pi for ${gig.title}. Awaiting verification...`);
-      setTimeout(() => {
-        alert(`Verified! ${gig.price} Pi paid for ${gig.title}.`);
-        document.getElementById('ratingSection').style.display = 'block';
-      }, 2000);
-    }
-    function updateStars() {
-      var rating = document.getElementById('rating').value;
-      document.getElementById('starRating').innerHTML = '★'.repeat(rating) + '☆'.repeat(5 - rating);
-    }
-    function submitRating() {
-      alert(`Rating submitted: ${document.getElementById('rating').value}/5. Thanks!`);
-      document.getElementById('ratingSection').style.display = 'none';
-    }
-
-    // Location
-    function locateUser() {
-      if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(pos => {
-          map.setView([pos.coords.latitude, pos.coords.longitude], 13);
-          L.marker([pos.coords.latitude, pos.coords.longitude]).addTo(map).bindPopup('Your Location');
-        }, () => alert('Location access denied.'));
-      } else {
-        alert('Geolocation not supported.');
-      }
-    }
-
-    // Search Filter
-    function filterContent() {
-      var input = document.getElementById('searchBar').value.toLowerCase();
-      var gigs = document.getElementById('gigList').getElementsByClassName('gig-item');
-      for (var i = 0; i < gigs.length; i++) {
-        var text = gigs[i].innerText.toLowerCase();
-        gigs[i].style.display = text.includes(input) ? 'block' : 'none';
-      }
-    }
-  </script>
+  <!-- App script -->
+  <script src="script.js"></script>
 </body>
 </html>
