@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GigPi - Pi Network Marketplace</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-coins"></i>
+                    <h1>GigPi</h1>
+                </div>
+                <div class="badge">Pi Network Marketplace</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Search Bar -->
+            <div class="search-section">
+                <div class="search-box">
+                    <i class="fas fa-search"></i>
+                    <input type="text" id="searchInput" placeholder="Search gigs, shops, or services...">
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="gigs">
+                    <i class="fas fa-briefcase"></i>
+                    Gigs
+                </button>
+                <button class="tab-btn" data-tab="shops">
+                    <i class="fas fa-store"></i>
+                    Shops
+                </button>
+                <button class="tab-btn" data-tab="delivery">
+                    <i class="fas fa-truck"></i>
+                    Delivery
+                </button>
+                <button class="tab-btn" data-tab="post">
+                    <i class="fas fa-plus"></i>
+                    Post
+                </button>
+            </div>
+          <!-- Tab Content -->
+            <div class="tab-content">
+                <!-- Gigs Tab -->
+                <div id="gigs" class="tab-pane active">
+                    <div class="section-header">
+                        <h2>Available Gigs</h2>
+                        <span class="count-badge" id="gigsCount">0 gigs</span>
+                    </div>
+                    <div id="gigsList" class="items-grid">
+                        <!-- Gigs will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Shops Tab -->
+                <div id="shops" class="tab-pane">
+                    <div class="section-header">
+                        <h2>Local Shops</h2>
+                        <span class="count-badge" id="shopsCount">0 shops</span>
+                    </div>
+                    <div id="shopsList" class="items-grid">
+                        <!-- Shops will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Delivery Tab -->
+                <div id="delivery" class="tab-pane">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-truck"></i> Create Delivery Block</h3>
+                        </div>
+                        <form id="deliveryForm" class="form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Duration</label>
+                                    <select id="deliveryDuration" required>
+                                        <option value="">Select duration</option>
+                                        <option value="3h">3 Hours (10 Pi)</option>
+                                        <option value="6h">6 Hours (20 Pi)</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Start Time</label>
+                                    <input type="datetime-local" id="deliveryStartTime" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">
+                                <i class="fas fa-play"></i>
+                                Start Delivery Block
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <!-- Post Tab -->
+                <div id="post" class="tab-pane">
+                    <!-- Post Gig Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-plus"></i> Post a Gig</h3>
+                        </div>
+                        <form id="gigForm" class="form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Title</label>
+                                    <input type="text" id="gigTitle" placeholder="e.g., Deliver groceries" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Price (Pi)</label>
+                                    <input type="number" id="gigPrice" step="0.1" placeholder="e.g., 5" required>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Location</label>
+                                    <input type="text" id="gigLocation" placeholder="e.g., Downtown" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <input type="text" id="gigCategory" placeholder="e.g., delivery, cleaning">
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Description</label>
+                                <textarea id="gigDescription" placeholder="Describe what needs to be done..." rows="3" required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-success btn-full">
+                                <i class="fas fa-briefcase"></i>
+                                Post Gig
+                            </button>
+                        </form>
+                    </div>
+                    <!-- Register Shop Form -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h3><i class="fas fa-store"></i> Register Shop</h3>
+                        </div>
+                        <form id="shopForm" class="form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Shop Name</label>
+                                    <input type="text" id="shopName" placeholder="e.g., Bob's Auto Shop" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Category</label>
+                                    <select id="shopCategory" required>
+                                        <option value="">Select category</option>
+                                        <option value="supermarket">Supermarket</option>
+                                        <option value="repair">Repair Shop</option>
+                                        <option value="auto">Auto Shop</option>
+                                        <option value="restaurant">Restaurant</option>
+                                        <option value="electronics">Electronics</option>
+                                        <option value="fashion">Fashion</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label>Services</label>
+                                    <input type="text" id="shopServices" placeholder="e.g., Oil change, tire repair" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Location</label>
+                                    <input type="text" id="shopLocation" placeholder="e.g., Main Street" required>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Description (Optional)</label>
+                                <textarea id="shopDescription" placeholder="Tell customers about your shop..." rows="3"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-purple btn-full">
+                                <i class="fas fa-store"></i>
+                                Register Shop
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Confirm Payment</h3>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="payment-info">
+                    <h4 id="paymentItemName"></h4>
+                    <div class="amount">
+                        <span>Amount:</span>
+                        <div class="pi-amount">
+                            <i class="fas fa-coins"></i>
+                            <span id="paymentAmount"></span> Pi
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="closePaymentModal()">Cancel</button>
+                    <button class="btn btn-primary" onclick="processPayment()">Pay with Pi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rating Modal -->
+    <div id="ratingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Rate Your Experience</h3>
+                <button class="modal-close" onclick="closeRatingModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <h4 id="ratingItemName"></h4>
+                <div class="rating-stars">
+                    <i class="fas fa-star" data-rating="1"></i>
+                    <i class="fas fa-star" data-rating="2"></i>
+                    <i class="fas fa-star" data-rating="3"></i>
+                    <i class="fas fa-star" data-rating="4"></i>
+                    <i class="fas fa-star" data-rating="5"></i>
+                </div>
+                <div class="form-group">
+                    <label>Comment (Optional)</label>
+                    <textarea id="ratingComment" placeholder="Share your experience..." rows="3"></textarea>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-outline" onclick="closeRatingModal()">Skip</button>
+                    <button class="btn btn-success" onclick="submitRating()">Submit Rating</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <!-- Loading Spinner -->
+    <div id="loadingSpinner" class="loading-spinner">
+        <div class="spinner"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
