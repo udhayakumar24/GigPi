@@ -18,17 +18,17 @@ mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
 client = AsyncIOMotorClient(mongo_url)
 db = client[os.environ.get('DB_NAME', 'gigpi')]
 
-# Create the main app without a prefix
+# Create the main app
 app = FastAPI(
     title="GigPi API",
     description="Pi Network Marketplace API",
     version="1.0.0"
 )
 
-# Create a router with the /api prefix
+# Create API router
 api_router = APIRouter(prefix="/api")
 
-# Define Models
+# Models
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
@@ -60,7 +60,8 @@ class GigCreate(BaseModel):
     poster: str
     isUrgent: bool = False
     estimatedTime: str
-  class Shop(BaseModel):
+
+class Shop(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str
     category: str
@@ -83,16 +84,15 @@ class ShopCreate(BaseModel):
     deliveryAvailable: bool = False
     priceRange: str = ""
 
-# Add your routes to the router instead of directly to app
+# Routes
 @api_router.get("/")
 async def root():
     return {"message": "GigPi API is running!", "version": "1.0.0"}
 
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
-    status_dict = input.dict()
-    status_obj = StatusCheck(**status_dict)
-    _ = await db.status_checks.insert_one(status_obj.dict())
+    status_obj = StatusCheck(**input.dict())
+    await db.status_checks.insert_one(status_obj.dict())
     return status_obj
 
 @api_router.get("/status", response_model=List[StatusCheck])
@@ -103,8 +103,7 @@ async def get_status_checks():
 # Gig endpoints
 @api_router.post("/gigs", response_model=Gig)
 async def create_gig(gig_data: GigCreate):
-    gig_dict = gig_data.dict()
-    gig_obj = Gig(**gig_dict)
+    gig_obj = Gig(**gig_data.dict())
     await db.gigs.insert_one(gig_obj.dict())
     return gig_obj
 
@@ -123,11 +122,11 @@ async def get_gig(gig_id: str):
 # Shop endpoints
 @api_router.post("/shops", response_model=Shop)
 async def create_shop(shop_data: ShopCreate):
-    shop_dict = shop_data.dict()
-    shop_obj = Shop(**shop_dict)
+    shop_obj = Shop(**shop_data.dict())
     await db.shops.insert_one(shop_obj.dict())
     return shop_obj
-  @api_router.get("/shops", response_model=List[Shop])
+
+@api_router.get("/shops", response_model=List[Shop])
 async def get_shops():
     shops = await db.shops.find().to_list(1000)
     return [Shop(**shop) for shop in shops]
@@ -139,9 +138,10 @@ async def get_shop(shop_id: str):
         return Shop(**shop)
     return {"error": "Shop not found"}
 
-# Include the router in the main app
+# Include router
 app.include_router(api_router)
 
+# Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
@@ -150,7 +150,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Configure logging
+# Logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -166,3 +166,4 @@ async def startup_db_client():
 async def shutdown_db_client():
     logger.info("Shutting down GigPi API...")
     client.close()
+    
