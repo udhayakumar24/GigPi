@@ -1,38 +1,42 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, HTTPException
 from dotenv import load_dotenv
 from starlette.middleware.cors import CORSMiddleware
 from motor.motor_asyncio import AsyncIOMotorClient
-import os
-import logging
-from pathlib import Path
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
+from datetime import datetime, timezone
+from pathlib import Path
+import os
 import uuid
-from datetime import datetime
+import logging
 
+# Load environment variables
 ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # MongoDB connection
 mongo_url = os.environ.get('MONGO_URL', 'mongodb://localhost:27017')
+db_name = os.environ.get('DB_NAME', 'gigpi')
 client = AsyncIOMotorClient(mongo_url)
-db = client[os.environ.get('DB_NAME', 'gigpi')]
+db = client[db_name]
 
-# Create the main app
+# FastAPI app
 app = FastAPI(
     title="GigPi API",
     description="Pi Network Marketplace API",
     version="1.0.0"
 )
 
-# Create API router
+# Router
 api_router = APIRouter(prefix="/api")
 
-# Models
+# ==========================
+# MODELS
+# ==========================
 class StatusCheck(BaseModel):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     client_name: str
-    timestamp: datetime = Field(default_factory=datetime.utcnow)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class StatusCheckCreate(BaseModel):
     client_name: str
@@ -49,7 +53,7 @@ class Gig(BaseModel):
     reviews: int = 0
     isUrgent: bool = False
     estimatedTime: str
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class GigCreate(BaseModel):
     title: str
@@ -73,7 +77,7 @@ class Shop(BaseModel):
     isOpen: bool = True
     deliveryAvailable: bool = False
     priceRange: str = ""
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class ShopCreate(BaseModel):
     name: str
@@ -84,11 +88,16 @@ class ShopCreate(BaseModel):
     deliveryAvailable: bool = False
     priceRange: str = ""
 
-# Routes
+# ==========================
+# ROUTES
+# ==========================
+
+# Root
 @api_router.get("/")
 async def root():
     return {"message": "GigPi API is running!", "version": "1.0.0"}
 
+# Status routes
 @api_router.post("/status", response_model=StatusCheck)
 async def create_status_check(input: StatusCheckCreate):
     status_obj = StatusCheck(**input.dict())
@@ -98,9 +107,9 @@ async def create_status_check(input: StatusCheckCreate):
 @api_router.get("/status", response_model=List[StatusCheck])
 async def get_status_checks():
     status_checks = await db.status_checks.find().to_list(1000)
-    return [StatusCheck(**status_check) for status_check in status_checks]
+    return [StatusCheck(**sc) for sc in status_checks]
 
-# Gig endpoints
+# Gig routes
 @api_router.post("/gigs", response_model=Gig)
 async def create_gig(gig_data: GigCreate):
     gig_obj = Gig(**gig_data.dict())
@@ -108,18 +117,27 @@ async def create_gig(gig_data: GigCreate):
     return gig_obj
 
 @api_router.get("/gigs", response_model=List[Gig])
-async def get_gigs():
-    gigs = await db.gigs.find().to_list(1000)
+async def get_gigs(search: Optional[str] = None):
+    query = {}
+    if search:
+        query = {
+            "$or": [
+                {"title": {"$regex": search, "$options": "i"}},
+                {"description": {"$regex": search, "$options": "i"}},
+                {"category": {"$regex": search, "$options": "i"}}
+            ]
+        }
+    gigs = await db.gigs.find(query).sort("created_at", -1).to_list(1000)
     return [Gig(**gig) for gig in gigs]
 
 @api_router.get("/gigs/{gig_id}", response_model=Gig)
 async def get_gig(gig_id: str):
     gig = await db.gigs.find_one({"id": gig_id})
-    if gig:
-        return Gig(**gig)
-    return {"error": "Gig not found"}
+    if not gig:
+        raise HTTPException(status_code=404, detail="Gig not found")
+    return Gig(**gig)
 
-# Shop endpoints
+# Shop routes
 @api_router.post("/shops", response_model=Shop)
 async def create_shop(shop_data: ShopCreate):
     shop_obj = Shop(**shop_data.dict())
@@ -127,30 +145,42 @@ async def create_shop(shop_data: ShopCreate):
     return shop_obj
 
 @api_router.get("/shops", response_model=List[Shop])
-async def get_shops():
-    shops = await db.shops.find().to_list(1000)
+async def get_shops(search: Optional[str] = None):
+    query = {}
+    if search:
+        query = {
+            "$or": [
+                {"name": {"$regex": search, "$options": "i"}},
+                {"services": {"$regex": search, "$options": "i"}},
+                {"category": {"$regex": search, "$options": "i"}}
+            ]
+        }
+    shops = await db.shops.find(query).sort("created_at", -1).to_list(1000)
     return [Shop(**shop) for shop in shops]
 
 @api_router.get("/shops/{shop_id}", response_model=Shop)
 async def get_shop(shop_id: str):
     shop = await db.shops.find_one({"id": shop_id})
-    if shop:
-        return Shop(**shop)
-    return {"error": "Shop not found"}
+    if not shop:
+        raise HTTPException(status_code=404, detail="Shop not found")
+    return Shop(**shop)
 
-# Include router
+# ==========================
+# MIDDLEWARE & ROUTER
+# ==========================
 app.include_router(api_router)
 
-# Middleware
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_origins=os.environ.get('CORS_ORIGINS', '*').split(','),
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
-# Logging
+# ==========================
+# LOGGING
+# ==========================
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -159,8 +189,8 @@ logger = logging.getLogger(__name__)
 
 @app.on_event("startup")
 async def startup_db_client():
-    logger.info("Starting up GigPi API...")
-    logger.info("Connected to MongoDB")
+    logger.info("Starting GigPi API...")
+    logger.info(f"Connected to MongoDB: {db_name}")
 
 @app.on_event("shutdown")
 async def shutdown_db_client():
